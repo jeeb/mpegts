@@ -1,3 +1,5 @@
+#define SYNC_BYTE 0x47
+
 /* Contents of the Transport Stream Packet */
 
 typedef struct

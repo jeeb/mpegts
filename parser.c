@@ -12,8 +12,6 @@
 #include <libavutil/bswap.h>
 #include "mpegts.h"
 
-#define SYNC_BYTE 0x47
-
 int main( int argc, char** argv ) {
     FILE *file = NULL;
     uint8_t read_data;
