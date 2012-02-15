@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <libavutil/bswap.h>
+#include "mpegts.h"
 
 #define SYNC_BYTE 0x47
 
@@ -28,15 +29,6 @@ int main( int argc, char** argv ) {
     uint16_t up_to_pid; /* First 16 bits after sync_byte until PID. */
     uint8_t after_pid; /* 8 bits after PID. */
     
-    /* Contents of the Transport Stream Packet */
-    uint8_t transport_error_indicator;
-    uint8_t payload_unit_start_indicator;
-    uint8_t transport_priority;
-    uint16_t pid;
-    uint8_t transport_scrambling_control;
-    uint8_t adaptation_field_control;
-    uint8_t continuity_counter;
-    
     /* Load the file and check its size. */
     file = fopen64( "herp.ts", "rb" );
     
@@ -44,11 +36,7 @@ int main( int argc, char** argv ) {
     fsize = ftello64( file );
     fseeko64( file, 0L, SEEK_SET );
     
-    /* Query packet size with the first N packets. */
-    do
-    {
-    
-    } while();
+    transport_packet_header tsheader;
     
     do
     {
@@ -62,15 +50,6 @@ int main( int argc, char** argv ) {
             if( counter < 4 ) {
                 last_sync_byte_pos[counter] = (uint64_t)(ftello64(file) -1);
                 counter += 1;
-            }
-            
-            if( counter == 4 ) {
-                for( counter = 0; counter < 3; counter++ ) {
-                    differences[counter] = last_sync_byte_pos[counter + 1] - last_sync_byte_pos[counter];
-                    printf("%i. difference is: %lu\n", counter + 1, differences[counter]);
-                }
-                printf("\n");
-                counter = 5;
             } 
             
             printf("Sync byte found at position: 0x%lX\n", (uint64_t)ftello64(file) -1);
@@ -83,13 +62,13 @@ int main( int argc, char** argv ) {
                 return 1;
             }
             
-            transport_error_indicator = (uint8_t)(up_to_pid >> 15);
-            payload_unit_start_indicator = (uint8_t)(up_to_pid << 1) >> 15;
-            transport_priority = (uint8_t)(up_to_pid << 2) >> 15;
-            pid = av_bswap16( (up_to_pid << 3) >> 3 );
-            printf("TEI: %u, PUSI: %u, TP: %u\n", transport_error_indicator,
-                    payload_unit_start_indicator, transport_priority );
-            printf("Seeming PID: 0x%X\n\n", pid);
+            tsheader.transport_error_indicator = (uint8_t)(up_to_pid >> 15);
+            tsheader.payload_unit_start_indicator = (uint8_t)(up_to_pid << 1) >> 15;
+            tsheader.transport_priority = (uint8_t)(up_to_pid << 2) >> 15;
+            tsheader.pid = av_bswap16( (up_to_pid << 3) >> 3 );
+            printf("TEI: %u, PUSI: %u, TP: %u\n", tsheader.transport_error_indicator,
+                    tsheader.payload_unit_start_indicator, tsheader.transport_priority );
+            printf("Seeming PID: 0x%X\n\n", tsheader.pid);
             
             derp = fread( &after_pid, sizeof( uint8_t ), 1, file );
             if( derp!= 1 )
@@ -97,10 +76,19 @@ int main( int argc, char** argv ) {
                 printf( "Derped at reading the 8 bits after PID.\n" );
                 return 1;
             }
+
+            if( counter == 4 ) {
+                for( counter = 0; counter < 3; counter++ ) {
+                    differences[counter] = last_sync_byte_pos[counter + 1] - last_sync_byte_pos[counter];
+                    printf("%i. difference is: %lu\n", counter + 1, differences[counter]);
+                }
+                printf("\n");
+                counter = 5;
+            }
             
-            transport_scrambling_control = after_pid >> 6;
-            adaptation_field_control = (after_pid << 2) >> 6;
-            /* continuity_counter = av_bswap8((after_pid << 4 ) >> 4) */
+            tsheader.transport_scrambling_control = after_pid >> 6;
+            tsheader.adaptation_field_control = (after_pid << 2) >> 6;
+            tsheader.continuity_counter = (after_pid << 4 ) >> 4;
             
         } else
             continue;
