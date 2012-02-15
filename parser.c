@@ -1,6 +1,6 @@
 /*
  * This shit compiles with:
- * gcc main.c -std=gnu99 -Wall -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -I/libav|ffmpeg/install/include
+ * gcc parser.c -std=gnu99 -Wall -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -I/libav|ffmpeg/install/include
  *
  * We have three possible packet lengths: 188-byte, 192-byte and 204-byte.
  */
@@ -32,7 +32,7 @@ int main( int argc, char** argv ) {
 
     fseeko64( file, 0L, SEEK_END );
     fsize = ftello64( file );
-    fseeko64( file, 0L, SEEK_SET );
+    rewind( file );
 
     transport_packet_header tsheader;
 
