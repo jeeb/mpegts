@@ -65,10 +65,11 @@ int main( int argc, char** argv ) {
 
             up_to_pid = ( ( djurpan[0] << 8 ) | djurpan[1] );
 
-            tsheader.transport_error_indicator = (uint8_t)(up_to_pid >> 15);
-            tsheader.payload_unit_start_indicator = (uint8_t)(up_to_pid << 1) >> 15;
-            tsheader.transport_priority = (uint8_t)(up_to_pid << 2) >> 15;
-            tsheader.pid = (up_to_pid << 3) >> 3;
+            tsheader.transport_error_indicator = (uint8_t)( (up_to_pid >> 15) & 0x1 );
+            tsheader.payload_unit_start_indicator = (uint8_t)( ( up_to_pid >> 14 ) & 0x1 );
+            tsheader.transport_priority = (uint8_t)( ( up_to_pid >> 13 ) & 0x1 );
+            tsheader.pid = up_to_pid & 0x1fff;
+ 
             printf("TEI: %u, PUSI: %u, TP: %u\n", tsheader.transport_error_indicator,
                     tsheader.payload_unit_start_indicator, tsheader.transport_priority );
             printf("Seeming PID: 0x%X\n\n", tsheader.pid);
