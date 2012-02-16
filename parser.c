@@ -65,9 +65,13 @@ int main( int argc, char** argv ) {
 
             up_to_pid = ( ( djurpan[0] << 8 ) | djurpan[1] );
 
-            tsheader.transport_error_indicator = (uint8_t)( ( up_to_pid >> 15 ) & 0x1 );
-            tsheader.payload_unit_start_indicator = (uint8_t)( ( up_to_pid >> 14 ) & 0x1 );
-            tsheader.transport_priority = (uint8_t)( ( up_to_pid >> 13 ) & 0x1 );
+            #define BIT16 0x8000
+            #define BIT15 0x4000
+            #define BIT14 0x2000
+
+            tsheader.transport_error_indicator = !!( up_to_pid & BIT16 );
+            tsheader.payload_unit_start_indicator = !!( up_to_pid & BIT15 );
+            tsheader.transport_error_indicator = !!( up_to_pid & BIT14 );
             tsheader.pid = up_to_pid & 0x1fff;
  
             printf("TEI: %u, PUSI: %u, TP: %u\n", tsheader.transport_error_indicator,
