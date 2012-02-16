@@ -49,7 +49,7 @@ int main( int argc, char** argv ) {
                 counter += 1;
             }
 
-            printf("Sync byte found at position: 0x%llX\n", (uint64_t)( ftello64(file) - 1 ) );
+            printf("Sync byte found at position: 0x%"PRIX64"\n", (uint64_t)( ftello64(file) - 1 ) );
 
             uint8_t djurpan[2] = { 0 };
 
@@ -88,7 +88,7 @@ int main( int argc, char** argv ) {
             if( counter == 4 ) {
                 for( counter = 0; counter < 3; counter++ ) {
                     differences[counter] = last_sync_byte_pos[counter + 1] - last_sync_byte_pos[counter];
-                    printf("%i. difference is: %llu\n", counter + 1, differences[counter]);
+                    printf("%i. difference is: %"PRIu64"\n", counter + 1, differences[counter]);
                 }
                 printf("\n");
                 counter = 5;
