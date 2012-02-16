@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <inttypes.h>
-#include <libavutil/bswap.h>
 #include "mpegts.h"
 
 int main( int argc, char** argv ) {
@@ -50,19 +49,26 @@ int main( int argc, char** argv ) {
                 counter += 1;
             }
 
-            printf("Sync byte found at position: 0x%lX\n", (uint64_t)ftello64(file) -1);
+            printf("Sync byte found at position: 0x%llX\n", (uint64_t)( ftello64(file) - 1 ) );
 
-            derp = fread( &up_to_pid, sizeof( uint16_t ), 1, file );
-            if( derp!= 1 )
+            uint8_t djurpan[2] = { 0 };
+
+            for(int i = 0; i < 2; i++)
             {
-                printf( "Derped at reading the first 16 bits after sync byte.\n" );
-                return 1;
+                derp = fread( &djurpan[i], sizeof( uint8_t ), 1, file );
+                if( derp != 1 )
+                {
+                    printf( "Derped at reading the first 16 bits after sync byte. i was %d", i );
+                    return 1;
+                }
             }
+
+            up_to_pid = ( ( djurpan[0] << 8 ) | djurpan[1] );
 
             tsheader.transport_error_indicator = (uint8_t)(up_to_pid >> 15);
             tsheader.payload_unit_start_indicator = (uint8_t)(up_to_pid << 1) >> 15;
             tsheader.transport_priority = (uint8_t)(up_to_pid << 2) >> 15;
-            tsheader.pid = av_bswap16( (up_to_pid << 3) >> 3 );
+            tsheader.pid = (up_to_pid << 3) >> 3;
             printf("TEI: %u, PUSI: %u, TP: %u\n", tsheader.transport_error_indicator,
                     tsheader.payload_unit_start_indicator, tsheader.transport_priority );
             printf("Seeming PID: 0x%X\n\n", tsheader.pid);
@@ -77,7 +83,7 @@ int main( int argc, char** argv ) {
             if( counter == 4 ) {
                 for( counter = 0; counter < 3; counter++ ) {
                     differences[counter] = last_sync_byte_pos[counter + 1] - last_sync_byte_pos[counter];
-                    printf("%i. difference is: %lu\n", counter + 1, differences[counter]);
+                    printf("%i. difference is: %llu\n", counter + 1, differences[counter]);
                 }
                 printf("\n");
                 counter = 5;
