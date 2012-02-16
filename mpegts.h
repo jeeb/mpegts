@@ -26,7 +26,7 @@ typedef struct
     uint8_t transport_private_data_flag:1;
     uint8_t extension_flag:1;
     /* If splicing_point_flag == 1 */
-    uint8_t splice_countdown;
+    int8_t splice_countdown;
     /* If transport_private_data_flag == 1 */
     uint8_t transport_private_data_length;
 } adaptation_field_header;
