@@ -1,6 +1,6 @@
 /*
  * This shit compiles with:
- * gcc parser.c -std=gnu99 -Wall -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -I/libav|ffmpeg/install/include
+ * gcc parser.c -std=gnu99 -Wall -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
  *
  * We have three possible packet lengths: 188-byte, 192-byte and 204-byte.
  */
