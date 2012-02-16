@@ -76,7 +76,9 @@ int main( int argc, char** argv ) {
  
             printf("TEI: %u, PUSI: %u, TP: %u\n", tsheader.transport_error_indicator,
                     tsheader.payload_unit_start_indicator, tsheader.transport_priority );
-            printf("Seeming PID: 0x%X\n\n", tsheader.pid);
+            printf("Seeming PID: 0x%X\n", tsheader.pid);
+
+
 
             derp = fread( &after_pid, sizeof( uint8_t ), 1, file );
             if( derp!= 1 )
@@ -85,19 +87,43 @@ int main( int argc, char** argv ) {
                 return 1;
             }
 
+            tsheader.transport_scrambling_control = ( after_pid >> 6 ) & 0x3;
+            tsheader.adaptation_field_control = ( after_pid >> 4 ) & 0x3;
+            tsheader.continuity_counter = after_pid & 0xf;
+
+            printf("TSC: %u, AFC: %u, CC: %u\n", tsheader.transport_scrambling_control,
+                   tsheader.adaptation_field_control, tsheader.continuity_counter);
+
+            if( tsheader.pid == 0x111 && tsheader.adaptation_field_control == 3 )
+                printf("I am HERE!\n");
+
+            if( tsheader.pid == 0x1FFF )
+                printf("We can has null packets!\n");
+
+            /*
+             * If AFC == 1, we have only a payload.
+             * If AFC == 2, we only have an adaptation field.
+             * If AFC == 3, we have an adaptation field as well as a payload.
+             */
+
+            if( tsheader.adaptation_field_control == 2 || tsheader.adaptation_field_control == 3 )
+                printf("Adaptation field parsing not yet implemented!\n");
+
+            if( tsheader.adaptation_field_control == 1 /*|| tsheader.adaptation_field_control == 3*/ )
+            {
+                printf("No adaptation field, we go on to parse the payload.\n");
+            }
+
             if( counter == 4 ) {
                 for( counter = 0; counter < 3; counter++ ) {
                     differences[counter] = last_sync_byte_pos[counter + 1] - last_sync_byte_pos[counter];
-                    printf("%i. difference is: %"PRIu64"\n", counter + 1, differences[counter]);
+                    printf("\n%i. difference is: %"PRIu64"\n", counter + 1, differences[counter]);
                 }
                 printf("\n");
                 counter = 5;
             }
 
-            tsheader.transport_scrambling_control = after_pid >> 6;
-            tsheader.adaptation_field_control = (after_pid << 2) >> 6;
-            tsheader.continuity_counter = (after_pid << 4 ) >> 4;
-
+            printf("\n");
         } else
             continue;
     } while( derp == 1 );
