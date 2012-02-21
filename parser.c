@@ -34,6 +34,12 @@ int main( int argc, char** argv ) {
     rewind( file );
 
     transport_packet_header tsheader;
+    adaptation_field_header afheader;
+    pcr pcrdata;
+    opcr opcrdata;
+    adaptation_field_extension afext;
+
+    uint8_t pcr_salvage[]
 
     do
     {
@@ -107,7 +113,44 @@ int main( int argc, char** argv ) {
              */
 
             if( tsheader.adaptation_field_control == 2 || tsheader.adaptation_field_control == 3 )
-                printf("Adaptation field parsing not yet implemented!\n");
+            {
+                derp = fread( &afheader.length , sizeof( uint8_t ), 1, file );
+                if( derp != 1 )
+                {
+                    printf( "Derped at reading the size of the size of the adaptation field.\n" );
+                    return 1;
+                }
+
+                if( afheader.length == 0 )
+                {
+                    printf( "We have an adaptation field, but the size of it is zero. Derp.\n" );
+                    return 1;
+                }
+                else
+                {
+                    derp = fread( &read_data, sizeof( uint8_t ), 1, file );
+                    if( derp != 1 )
+                    {
+                        printf( "Derped at reading the adaptation field header.\n" );
+                        return 1;
+                    }
+
+                    afheader.discontinuity_indicator = !!( read_data & ( 1 << 7 ) );
+                    afheader.random_access_indicator = !!( read_data & ( 1 << 6 ) );
+                    afheader.elementary_stream_priority_indicator = !!( read_data & ( 1 << 5 ) );
+                    afheader.pcr_flag = !!( read_data & ( 1 << 4 ) );
+                    afheader.opcr_flag = !!( read_data & ( 1 << 3 ) );
+                    afheader.splicing_point_flag = !!( read_data & ( 1 << 2 ) );
+                    afheader.transport_private_data_flag = !!( read_data & ( 1 << 1 ) );
+                    afheader.adaptation_field_extension = !!( read_data & 1 );
+
+                    if( afheader.pcr_flag )
+                    {
+                        /*derp = fread( &pcr_shit, sizeof( uint32_t ) + sizeof( uint16_t ) )*/
+                        /* Herp fucking derp. */
+                    }
+                }
+            }
 
             if( tsheader.adaptation_field_control == 1 /*|| tsheader.adaptation_field_control == 3*/ )
             {
